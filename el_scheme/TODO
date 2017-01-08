@@ -1,0 +1,10 @@
+[] - Select room should mark selected item in list
+[] - Selecting another item -> deselect current selected item.
+[] - Room model should have dragable points
+[] - draw lines between points
+[] - add more corners to rooms
+[] - fuse list
+[] - display sockets
+[] - add Delete button to info widgets
+[] - tree view
+[] - create pdf
