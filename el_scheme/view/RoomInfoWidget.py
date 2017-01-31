@@ -92,4 +92,5 @@ class RoomInfoWidget(QtGui.QWidget):
 
     def show(self):
         if self.proxy:
+            self.update()
             self.proxy.show()

@@ -147,7 +147,7 @@ class Room(HouseFeature):
         self.get_house().get_invoker().store_and_execute(cmd)
 
     def prepare_for_deletion(self):
-        self.get_model().delete_camera(self)
+        self.get_model().delete_room(self)
 
     def is_selected(self):
         return self._selected

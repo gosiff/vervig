@@ -7,9 +7,9 @@ import math
 __author__ = 'Fredrik Salovius'
 
 
-class SocketItem(PTGraphicsItem):
+class SwitchItem(PTGraphicsItem):
     """
-    SocketItem. Subclass of PTGraphicsItem, which is actually a QGraphicsObject. This is the draggable camera-icon
+    SwitchItem. Subclass of PTGraphicsItem, which is actually a QGraphicsObject. This is the draggable camera-icon
     seen in the RangeView scene. It visualises the Socket in the RangeView.
     Model: Socket
     """
@@ -18,7 +18,7 @@ class SocketItem(PTGraphicsItem):
     deleteSocketAction = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(SocketItem, self).__init__()
+        super(SwitchItem, self).__init__()
 
         self.model = None
 
@@ -84,22 +84,22 @@ class SocketItem(PTGraphicsItem):
         :param rect:
         :return:
         """
-        super(SocketItem, self).update(rect)
+        super(SwitchItem, self).update(rect)
 
     def contextMenuEvent(self, event):
         """
-        Display context menu when user clicks right mouse button on a SocketItem.
+        Display context menu when user clicks right mouse button on a SwitchItem.
         :param QContextMenuEvent:
         :return:
         """
 
         menu = QtGui.QMenu()
 
-        deleteSocketAction = menu.addAction("Delete socket")
+        deleteSocketAction = menu.addAction("Delete switch")
         deleteSocketAction.triggered.connect(self.deleteSocketAction)
         menu.exec_(event.screenPos())
 
     def setModel(self, model):
-        super(SocketItem, self).setModel(model)
+        super(SwitchItem, self).setModel(model)
         model.deleteRequested.connect(lambda: self.deleteSocketAction)
 

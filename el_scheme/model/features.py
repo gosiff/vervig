@@ -181,7 +181,7 @@ class HouseFeature(QtCore.QObject):
         :return:
         """
         cmd = GenericSetCommand(self._set_name, self.get_name, name)
-        self.get_house().get_invoker().store_and_execute(cmd)
+        self.get_model().get_invoker().store_and_execute(cmd)
 
     def get_description(self):
         return self._description
@@ -192,7 +192,7 @@ class HouseFeature(QtCore.QObject):
 
     def set_description(self, description):
         cmd = GenericSetCommand(self._set_description, self.get_description, description)
-        self.get_house().get_invoker().store_and_execute(cmd)
+        self.get_model().get_invoker().store_and_execute(cmd)
 
     def get_pos(self):
         """
@@ -239,3 +239,124 @@ class HouseFeature(QtCore.QObject):
         :return:
         """
         self._graphics_widget = widget
+
+
+class ElectricFeature(HouseFeature):
+    def __init__(self, name, feature_type, fuse):
+        super(ElectricFeature, self).__init__(name)
+        self.__x = 0  # pixels
+        self.__y = 0  # pixles
+        self._room_id = None
+        self._fuse = fuse
+        self._feature_type = feature_type
+        self._locked = False
+
+    def __getstate__(self):
+        d = copy.copy(self.__dict__)
+        del d['_graphics_item']
+        del d['_graphics_widget']
+        return d
+
+    def __setstate__(self, state):
+        """
+        Define deserialization of object from the state-dict.
+        :param state:
+        :return:
+        """
+
+        """# Support adding a new member not previously defined in the class
+        if 'new_member' not in state:
+            self.new_member = "new value"
+        self.__dict__.update(state)"""
+
+        """ # Support removing old members not in new version of class
+        if 'old_member' in state:
+            # If you want: do something with the old member
+            del state['old_member']
+        self.__dict__.update(state) """
+
+        self.__init__("", state['_fuse'])
+        self.__dict__.update(state)
+
+    def get_feature_type(self):
+        return self._feature_type
+
+    def get_position_in_room_x(self):
+        return self._x
+
+    def get_position_in_room_y(self):
+        return self._y
+
+    def set_position_in_room_x(self, value):
+        self._x = value
+
+    def set_position_in_room_y(self, value):
+        self._y = value
+
+    def get_pos(self):
+        """
+        Returns the image position of the feature i screen coordinates (pixels)
+        :return: QtCore.QPointF(x,y)
+        """
+        return QtCore.QPointF(self.__x, self.__y)
+
+    def _set_pos(self, new_pos):
+        """
+        new_pos is given in screen coordinates (pixels). Updates position without issuing a command.
+        :param new_pos: QtCore.QPointF(x, y)
+        :return:
+        """
+        self.__x = new_pos.x()
+        self.__y = new_pos.y()
+        self.updated.emit()
+
+    def set_pos(self, new_pos):
+        """
+        new_pos is given in screen coordinates (pixels)
+        :param new_pos: QtCore.QPointF(x, y)
+        :return:
+        """
+        if self._locked:
+            return
+
+        cmd = GenericSetCommand(self._set_pos, self.get_pos, new_pos)
+        self.get_model().get_invoker().store_and_execute(cmd)
+
+    def prepare_for_deletion(self):
+        self.get_model().delete_socket(self)
+
+    def get_room_id(self):
+        return self._room_id
+
+    def set_room_id(self, _id):
+        self._room_id = _id
+
+    def get_fuse(self):
+        return self._fuse
+
+    def set_fuse(self, new_object):
+        self._fuse = new_object
+        self.updated.emit()
+
+    def columnCount(self):
+        return 1
+
+    def childCount(self):
+        return len(self.get_all_children())
+
+    def child(self, row):
+        if row >= 0 and row < self.childCount():
+            return self.get_all_children()[row]
+        return None
+
+    def get_all_children(self):
+        return []
+
+    def parent(self):
+        return self.get_fuse()
+
+    def row(self):
+        return self._row
+
+    def data(self, column):
+        return self.get_name()

@@ -8,7 +8,7 @@ from StringUtils import resource_path
 import os
 
 
-class SocketInfoWidget(QtGui.QWidget):
+class LampOutletInfoWidget(QtGui.QWidget):
     """
     Model: Camera
     """
@@ -25,8 +25,8 @@ class SocketInfoWidget(QtGui.QWidget):
     lock_socket = QtCore.pyqtSignal(bool)
 
     def __init__(self, parent=None):
-        super(SocketInfoWidget, self).__init__(parent)
-        uic.loadUi(resource_path(os.path.join("ui", "socket_info.ui")), self)
+        super(LampOutletInfoWidget, self).__init__(parent)
+        uic.loadUi(resource_path(os.path.join("ui", "lamp_outlet_info.ui")), self)
 
         button_box = self.findChild(QtGui.QDialogButtonBox, "buttonBox")
         button_box.clicked.connect(self.clicked)
@@ -81,6 +81,12 @@ class SocketInfoWidget(QtGui.QWidget):
                 item_selected = iter
         room_cb.setCurrentIndex(item_selected)
 
+        switch_list = self.findChild(QtGui.QListWidget, 'switchListWidget')
+        switch_list.clear()
+
+        for sw  in self.model.get_all_children():
+            switch_name = sw.get_name()
+            switch_list.addItem(switch_name)
 
         if self.proxy:
             self.proxy.setPos(self.model.get_pos())

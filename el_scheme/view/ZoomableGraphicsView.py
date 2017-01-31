@@ -2,7 +2,7 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 from view.PTGraphicsScene import PTGraphicsScene
 
-__author__ = 'Fredrik'
+__author__ = 'Joakim Hugmark'
 
 
 class ZoomableGraphicsView(QtGui.QGraphicsView):

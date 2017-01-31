@@ -15,31 +15,31 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,1">
-     <item>
-      <widget class="QLabel" name="label">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="3,1">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Outlets (default=2)</string>
+        <string>Fuse id:</string>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QSpinBox" name="outletSpinBox">
-       <property name="maximum">
-        <number>4</number>
+     <item row="0" column="1">
+      <widget class="QLabel" name="fuseLabel">
+       <property name="text">
+        <string/>
        </property>
-       <property name="value">
-        <number>2</number>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QComboBox" name="fuseIdComboBox">
+    <widget class="QComboBox" name="lampComboBox">
      <item>
       <property name="text">
-       <string>Fuse id</string>
+       <string>Lamp outlet</string>
       </property>
      </item>
     </widget>

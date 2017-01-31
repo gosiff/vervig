@@ -3,36 +3,39 @@ from PyQt4 import QtCore
 import os
 from Commands import Invoker, AddFeatureCommand, DeleteFeatureCommand
 from model.fuse import Fuse
+from model.fuseTableModel import FuseTableModel
+from model.lamp import LampOutlet
+from model.socketTableModel import SocketTableModel
 from model.roomTableModel import RoomTableModel
 from model.TreeItemModel import TreeModel, CustomNode
 from model.room import Room
 import time
 
-from model.socket import Socket
+from model.power_socket import Socket
+from model.switch import Switch
 
 __author__ = 'Fredrik Salovius'
 
 
 class HouseModel(QtCore.QObject):
     updated = QtCore.pyqtSignal()
+    fuseChanged = QtCore.pyqtSignal()
+    lampChanged = QtCore.pyqtSignal()
     # featureCreated = QtCore.pyqtSignal()
 
     def __init__(self):
         super(HouseModel, self).__init__()
-        self.fuse_list = []
-        self.rooms = []
-        self.__num_sockets = 0
         self._features = dict()
         self._room_table_model = RoomTableModel(self)
+        self._socket_table_model = SocketTableModel(self)
+        self._fuse_table_model = FuseTableModel(self)
         self._fuse_tree_item_model = TreeModel(self)
         self._background_image = ''
-        self.fuse_not_set_node = CustomNode('undefined')
-        self._fuse_tree_item_model.addNewChild(self.fuse_not_set_node)
         self._background_image_data = QtCore.QByteArray()
         self._invoker = Invoker()
         self._rotation = 0.0
-        self._fuse_list = []
         print 'init house model'
+        self.updated.connect(self._fuse_table_model.updateAll)
 
     def __getstate__(self):
         """
@@ -42,6 +45,8 @@ class HouseModel(QtCore.QObject):
 
         d = copy.copy(self.__dict__)
         del d['_room_table_model']  # Do not save easily re-creatable table models
+        del d['_socket_table_model']  # Do not save easily re-creatable table models
+        del d['_fuse_table_model']  # Do not save easily re-creatable table models
         del d['_fuse_tree_item_model']
         del d['_invoker']
 
@@ -72,15 +77,20 @@ class HouseModel(QtCore.QObject):
             print "Detected old version of saved file!"
             self._background_image_data = QtCore.QByteArray()
 
+
         if isinstance(state['_features'], list):
             for feature in state['_features']:
                 self._append_feature(feature)
-
             del state['_features']
-
 
         self.__init__()
         self.__dict__.update(state)
+
+        if isinstance(state['_features'], dict):
+
+            for _id, feature in state['_features'].iteritems():
+                if feature.get_feature_type() == 'Fuse':
+                    self._fuse_tree_item_model.addChild(feature, None)
 
     def add_room(self, pos=None):
 
@@ -108,31 +118,108 @@ class HouseModel(QtCore.QObject):
         :param pos: QPointF (QPointF.x(), QPointF.y())
         Callback method for what happens when the user clicks the Add Camera button in the GUI
         """
+        if len(self.get_all_fuses()) == 0:
+            print 'No fuse'
+            return
         if pos is not None:
-            new_socket = self.add_socket()
-            new_socket._set_pos(pos)
+            obj = self.add_socket()
+            obj._set_pos(pos)
         else:
-            new_socket = Socket('New Socket')
-            self._fuse_tree_item_model.addNewChild(new_socket)
-            self.add_feature(new_socket)
+            fuse = self.get_all_fuses()[0]
+            name = 'Socket-' + str(len(self.get_all_sockets()) + 1)
+            obj = Socket(name, fuse)
+            self.add_feature(obj)
+            fuse.addChild(obj)
             # self._camera_table_model.end_append()
 
-        return new_socket
+        return obj
 
-    def delete_socket(self, id_or_socket):
-        if isinstance(id_or_socket, Socket):
-            self.delete_feature(id_or_socket)
+    def delete_socket(self, id_or_obj):
+        if isinstance(id_or_obj, Socket):
+            self.delete_feature(id_or_obj)
         else:
-            socket = self.get_feature_by_id(id_or_socket)
-            self.delete_feature(socket)
+            obj = self.get_feature_by_id(id_or_obj)
+            self.delete_feature(obj)
+        self.updated.emit()
+
+    def add_lamp(self, pos=None):
+        """
+        :param pos: QPointF (QPointF.x(), QPointF.y())
+        Callback method for what happens when the user clicks the Add Camera button in the GUI
+        """
+        if len(self.get_all_fuses()) == 0:
+            print 'No fuse'
+            return
+        if pos is not None:
+            obj = self.add_lamp()
+            obj._set_pos(pos)
+        else:
+            fuse = self.get_all_fuses()[0]
+            name = 'Lamp-Outlet-' + str(len(self.get_all_lamp_outlets()) + 1)
+            obj = LampOutlet(name, fuse)
+            self.add_feature(obj)
+            fuse.addChild(obj)
+
+            # self._camera_table_model.end_append()
+
+        return obj
+
+    def delete_lamp(self, id_or_obj):
+        if isinstance(id_or_obj, LampOutlet):
+            self.delete_feature(id_or_obj)
+        else:
+            obj = self.get_feature_by_id(id_or_obj)
+            self.delete_feature(obj)
+        self.updated.emit()
+
+    def add_switch(self, pos=None):
+        """
+        :param pos: QPointF (QPointF.x(), QPointF.y())
+        Callback method for what happens when the user clicks the Add Camera button in the GUI
+        """
+        if len(self.get_all_fuses()) == 0:
+            print 'No fuse'
+            return
+
+        if len(self.get_all_lamp_outlets()) == 0:
+            print 'No lamp outlets'
+            return
+
+        if pos is not None:
+            obj = self.add_switch()
+            obj._set_pos(pos)
+        else:
+            lamp = self.get_all_lamp_outlets()[0]
+            name = 'Switch-' + str(len(self.get_all_switch()) + 1)
+            obj = Switch(name, self.get_all_fuses()[0], lamp)
+            self.add_feature(obj)
+            lamp.addChild(obj)
+
+            # self._camera_table_model.end_append()
+
+        return obj
+
+    def delete_switch(self, id_or_obj):
+        if isinstance(id_or_obj, Switch):
+            self.delete_feature(id_or_obj)
+        else:
+            obj = self.get_feature_by_id(id_or_obj)
+            self.delete_feature(obj)
         self.updated.emit()
 
     def add_fuse(self, pos=None):
-        new_fuse = Fuse('New Fuse')
-        self.add_feature(new_fuse)
+        if pos is not None:
+            new_fuse = self.add_fuse()
+            new_fuse._set_pos(pos)
+        else:
+            _id = len(self.get_all_fuses()) + 1
+            name = 'Fuse-' + str(_id)
+            new_fuse = Fuse( name, _id)
+            self.add_feature(new_fuse)
+            self._fuse_tree_item_model.addChild(new_fuse, None)
+        return new_fuse
 
-
-    def remove_fuse(self, id_or_fuse):
+    def delete_fuse(self, id_or_fuse):
         if isinstance(id_or_fuse, Fuse):
             self.delete_feature(id_or_fuse)
         else:
@@ -150,7 +237,21 @@ class HouseModel(QtCore.QObject):
         return [x for x in self._features.values() if x.get_feature_type() == 'Socket']
 
     def get_all_fuses(self):
-        return self._fuse_list
+        return [x for x in self._features.values() if x.get_feature_type() == 'Fuse']
+
+    def get_all_lamp_outlets(self):
+        return [x for x in self._features.values() if x.get_feature_type() == 'Lamp']
+
+    def get_all_switch(self):
+        return [x for x in self._features.values() if x.get_feature_type() == 'Switch']
+
+    def get_all_children_of_fuse(self, fuse):
+        lst = list()
+        for x in self._features.values():
+            if x.get_feature_type() != 'Fuse' and x.get_feature_type() != 'Room' and x.get_feature_type() != 'Switch':
+                if x.get_fuse() == fuse:
+                    lst.append(x)
+        return lst
 
     def get_room_name_by_id(self, _id):
         lst = self.get_all_sockets()
@@ -216,6 +317,12 @@ class HouseModel(QtCore.QObject):
 
     def get_room_table_model(self):
         return self._room_table_model
+
+    def get_socket_table_model(self):
+        return self._socket_table_model
+
+    def get_fuse_table_model(self):
+        return self._fuse_table_model
 
     def get_fuse_tree_item_model(self):
         return self._fuse_tree_item_model

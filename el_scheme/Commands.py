@@ -7,7 +7,7 @@ at the LAST command. This lets us keep track of unsaved changes, which is when t
 have a save point.
 """
 
-__author__ = 'Fredrik'
+__author__ = 'Joakim Hugmark'
 
 
 class Invoker(object):

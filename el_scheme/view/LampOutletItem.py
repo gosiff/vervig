@@ -7,7 +7,7 @@ import math
 __author__ = 'Fredrik Salovius'
 
 
-class SocketItem(PTGraphicsItem):
+class LampOutletItem(PTGraphicsItem):
     """
     SocketItem. Subclass of PTGraphicsItem, which is actually a QGraphicsObject. This is the draggable camera-icon
     seen in the RangeView scene. It visualises the Socket in the RangeView.
@@ -18,7 +18,7 @@ class SocketItem(PTGraphicsItem):
     deleteSocketAction = QtCore.pyqtSignal()
 
     def __init__(self):
-        super(SocketItem, self).__init__()
+        super(LampOutletItem, self).__init__()
 
         self.model = None
 
@@ -34,15 +34,17 @@ class SocketItem(PTGraphicsItem):
         """
         return QtCore.QRectF(-1000, -1000, 2000, 2000)
 
-    def socket_polygon(self, width=50, height=20):
+    def item_polygon(self, width=50, height=20):
         """
         Create a polygon in the shape of a camera with the given dimensions.
         :param width: (optional) width of the polygon
         :param height: (optional) height of the polygon
         :return: QPolygonF object with the shape of a camera
         """
-        points = [QPointF(-0.5*width, 0.6*height), QPointF(0.5*width, (0.6)*height),
-                  QPointF((0.5)*width,-(0.6)*height), QPointF((-0.5)*width, -0.6*height)]
+        points = [QPointF(-0.5*width, 0.5*height), QPointF(0.5*width, -(0.5)*height),
+                  QPointF(0, 0),
+                  QPointF((0.5)*width,(0.5)*height), QPointF((-0.5)*width, -0.5*height),
+                  QPointF(0, 0),]
         polygon = QtGui.QPolygonF(points)
         return polygon
 
@@ -67,8 +69,9 @@ class SocketItem(PTGraphicsItem):
         # painter.drawEllipse(-15, -15, 30, 30)
 
         painter.setPen(QtCore.Qt.black)
-        socket_polygon = self.socket_polygon(5, 5)
-        painter.drawPolygon(socket_polygon)
+        item_polygon = self.item_polygon(5, 5)
+        painter.drawPolygon(item_polygon)
+        painter.drawEllipse(-5,-5,10,10)
 
         font = painter.font()
         font.setPixelSize(10)
@@ -84,7 +87,7 @@ class SocketItem(PTGraphicsItem):
         :param rect:
         :return:
         """
-        super(SocketItem, self).update(rect)
+        super(LampOutletItem, self).update(rect)
 
     def contextMenuEvent(self, event):
         """
@@ -95,11 +98,11 @@ class SocketItem(PTGraphicsItem):
 
         menu = QtGui.QMenu()
 
-        deleteSocketAction = menu.addAction("Delete socket")
+        deleteSocketAction = menu.addAction("Delete lamp outlet")
         deleteSocketAction.triggered.connect(self.deleteSocketAction)
         menu.exec_(event.screenPos())
 
     def setModel(self, model):
-        super(SocketItem, self).setModel(model)
+        super(LampOutletItem, self).setModel(model)
         model.deleteRequested.connect(lambda: self.deleteSocketAction)
 

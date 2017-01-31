@@ -1,7 +1,7 @@
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 
-__author__ = 'Fredrik'
+__author__ = 'Joakim Hugmark'
 
 
 class PTGraphicsItem(QtGui.QGraphicsObject):

@@ -8,7 +8,7 @@ from StringUtils import resource_path
 import os
 
 
-class SocketInfoWidget(QtGui.QWidget):
+class SwitchInfoWidget(QtGui.QWidget):
     """
     Model: Camera
     """
@@ -25,8 +25,8 @@ class SocketInfoWidget(QtGui.QWidget):
     lock_socket = QtCore.pyqtSignal(bool)
 
     def __init__(self, parent=None):
-        super(SocketInfoWidget, self).__init__(parent)
-        uic.loadUi(resource_path(os.path.join("ui", "socket_info.ui")), self)
+        super(SwitchInfoWidget, self).__init__(parent)
+        uic.loadUi(resource_path(os.path.join("ui", "switch_info.ui")), self)
 
         button_box = self.findChild(QtGui.QDialogButtonBox, "buttonBox")
         button_box.clicked.connect(self.clicked)
@@ -56,17 +56,8 @@ class SocketInfoWidget(QtGui.QWidget):
         self.hide()
 
     def update(self):
-        fuse_id_cb = self.findChild(QtGui.QComboBox, 'fuseIdComboBox')
-        fuse_id_cb.clear()
-        fuse_id_cb.addItem('-- Availible fuse --')
-        item_selected = 0
-        iter = 0
-        for fuse in self.model.get_model().get_all_fuses():
-            iter += 1
-            fuse_id_cb.addItem(str(fuse.get_fuse_id()))
-            if fuse.get_fuse_id() == self.model.get_fuse().get_fuse_id():
-                item_selected = iter
-        fuse_id_cb.setCurrentIndex(item_selected)
+        fuse_id_label = self.findChild(QtGui.QLabel, 'fuseLabel')
+        fuse_id_label.setText(str(self.model.get_fuse().get_fuse_id()))
 
         room_cb = self.findChild(QtGui.QComboBox, 'roomComboBox')
         room_cb.clear()
@@ -81,6 +72,18 @@ class SocketInfoWidget(QtGui.QWidget):
                 item_selected = iter
         room_cb.setCurrentIndex(item_selected)
 
+        lamp_cb = self.findChild(QtGui.QComboBox, 'lampComboBox')
+        lamp_cb.clear()
+        lamp_cb.addItem('-- Availible lamp outlets --')
+        item_selected = 0
+        iter = 0
+        for lamp in self.model.get_model().get_all_lamp_outlets():
+            iter += 1
+            item_name = lamp.get_name()
+            lamp_cb.addItem(item_name)
+            if lamp == self.model.get_lamp():
+                item_selected = iter
+            lamp_cb.setCurrentIndex(item_selected)
 
         if self.proxy:
             self.proxy.setPos(self.model.get_pos())
@@ -93,21 +96,19 @@ class SocketInfoWidget(QtGui.QWidget):
 
     # User push Apply button
     def apply(self):
-        fuse_cb_text = self.findChild(QtGui.QComboBox, 'fuseIdComboBox').currentText()
         room_cb_text = self.findChild(QtGui.QComboBox, 'roomComboBox').currentText()
+        lamp_cb_text = self.findChild(QtGui.QComboBox, 'lampComboBox').currentText()
         try:
             room_id = int(room_cb_text[room_cb_text.find('(')+1:-1])
         except:
             room_id = None
         self.model.set_room_id(room_id)
-        for fuse in self.model.get_model().get_all_fuses():
-            if str(fuse.get_fuse_id()) == fuse_cb_text:
-                self.model.get_fuse().updated.emit()
-                fuse.addChild(self.model)
-                break
 
-        outlets = self.findChild(QtGui.QSpinBox, 'outletSpinBox').value()
-        self.model.set_outlets(outlets)
+        for lamp in self.model.get_model().get_all_lamp_outlets():
+            if lamp.get_name() == lamp_cb_text:
+                self.model.set_lamp(lamp)
+                lamp.addChild(self.model)
+                break
 
     # User push Close button
     def reject(self):

@@ -1,5 +1,12 @@
 from PIL import Image
 
+from view.FuseInfoWidget import FuseInfoWidget
+from view.FuseItem import FuseItem
+from view.LampOutletInfoWidget import LampOutletInfoWidget
+from view.LampOutletItem import LampOutletItem
+from view.SwitchInfoWidget import SwitchInfoWidget
+from view.SwitchItem import SwitchItem
+
 __author__ = 'Fredrik Salovius'
 from PyQt4 import QtCore
 from PyQt4 import QtGui
@@ -25,6 +32,9 @@ class HouseImageView(ZoomableGraphicsView):
 
         self.scene().addSocketAction = lambda pos: self.model.add_socket(pos)
         self.scene().addRoomAction = lambda pos: self.model.add_room(pos)
+        self.scene().addFuseAction = lambda pos: self.model.add_fuse(pos)
+        self.scene().addSwitchAction = lambda pos: self.model.add_switch(pos)
+        self.scene().addLampAction = lambda pos: self.model.add_lamp(pos)
         self.scene().setImageAction.connect(self._open_background_image_dialog)
 
         self.background_image = QtGui.QImage()
@@ -80,6 +90,33 @@ class HouseImageView(ZoomableGraphicsView):
         self._setup_background()
         self._add_sockets()
         self._add_rooms()
+        self._add_fuses()
+        self._add_switchs()
+        self._add_lamp_outlets()
+
+    def _add_fuse(self, model):
+        itm = FuseItem()
+        itm.setModel(model)
+
+        itm_widget = FuseInfoWidget()
+        itm_widget.setModel(model)
+
+        itm.double_clicked.connect(itm_widget.show)
+        itm.deleteFuseAction.connect(model.prepare_for_deletion)
+
+        self.scene().addItem(itm)
+        proxy = self.scene().addWidget(itm_widget)
+        itm_widget.setProxy(proxy)
+
+    def _add_fuses(self):
+        """
+        Add all cameras in the RangeModel to the scene.
+        :return:
+        """
+        fuse_list = self.model.get_all_fuses()
+
+        for fuse in fuse_list:
+            self._add_fuse(fuse)
 
     def _add_socket(self, socket_model):
         """
@@ -112,6 +149,70 @@ class HouseImageView(ZoomableGraphicsView):
 
         for socket in sockets:
             self._add_socket(socket)
+
+    def _add_switch(self, model):
+        """
+        Create a new CameraItem and CameraInfoWidget and add them to the scene.
+        :param camera_model: CameraModel to associate with the CameraItem and CameraInfoWidget.
+        :return:
+        """
+
+        # Create a new CameraItem and set the model
+        item = SwitchItem()
+        item.setModel(model)
+
+        # Create a new CameraInfoWidget and set the model
+        widget = SwitchInfoWidget()
+        widget.setModel(model)
+
+        item.double_clicked.connect(widget.show)
+        item.deleteSocketAction.connect(model.prepare_for_deletion)
+
+        self.scene().addItem(item)
+        proxy = self.scene().addWidget(widget)
+        widget.setProxy(proxy)
+
+    def _add_switchs(self):
+        """
+        Add all cameras in the RangeModel to the scene.
+        :return:
+        """
+        lst = self.model.get_all_switch()
+
+        for itm in lst:
+            self._add_switch(itm)
+
+    def _add_lamp_outlet(self, model):
+        """
+        Create a new CameraItem and CameraInfoWidget and add them to the scene.
+        :param camera_model: CameraModel to associate with the CameraItem and CameraInfoWidget.
+        :return:
+        """
+
+        # Create a new CameraItem and set the model
+        item = LampOutletItem()
+        item.setModel(model)
+
+        # Create a new CameraInfoWidget and set the model
+        widget = LampOutletInfoWidget()
+        widget.setModel(model)
+
+        item.double_clicked.connect(widget.show)
+        item.deleteSocketAction.connect(model.prepare_for_deletion)
+
+        self.scene().addItem(item)
+        proxy = self.scene().addWidget(widget)
+        widget.setProxy(proxy)
+
+    def _add_lamp_outlets(self):
+        """
+        Add all cameras in the RangeModel to the scene.
+        :return:
+        """
+        lst = self.model.get_all_lamp_outlets()
+
+        for itm in lst:
+            self._add_lamp_outlet(itm)
 
     def _add_room(self, room_model):
         """
